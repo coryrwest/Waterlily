@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Waterlily;
 
-public sealed class AppDbContext : IdentityDbContext
+public sealed class AppDbContext : DbContext
 {
     public DbSet<Survey> Surveys { get; set; }
     public DbSet<SurveyQuestion> SurveyQuestions { get; set; }
