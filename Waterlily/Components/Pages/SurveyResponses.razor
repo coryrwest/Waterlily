@@ -1,0 +1,44 @@
+﻿@page "/surveyresponses/{id:guid}/{userid:guid}"
+
+<h1>Your Survey Responses</h1>
+
+@if (responses == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Question Title</th>
+                <th>Description</th>
+                <th>Your Response</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var response in responses)
+            {
+                <tr>
+                    <td>@response.QuestionTitle</td>
+                    <td>@response.QuestionDescription</td>
+                    <td>@response.Response</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter] public Guid id { get; set; }
+    [Parameter] public Guid userid { get; set; }
+    [Inject] public SurveyService SurveyService { get; set; }
+
+    private User currentUser;
+    private List<SurveyResponse> responses;
+
+    protected override async Task OnInitializedAsync()
+    {
+        responses = await SurveyService.GetSurveyResponsesForUser(id, userid);
+    }
+}

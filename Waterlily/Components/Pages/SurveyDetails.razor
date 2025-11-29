@@ -1,0 +1,88 @@
+﻿@page "/survey/{id:guid}"
+@rendermode InteractiveServer
+
+<h1>Your Survey Questions</h1>
+
+<p>Please answer each question.</p>
+
+<EditForm Model="@uISurvey" OnValidSubmit="Submit" FormName="responses-form">
+    
+@if (uISurvey == null || uISurvey?.Responses == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Question Title</th>
+                <th>Description</th>
+                <th>Your Response</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var response in uISurvey?.Responses)
+            {
+                <tr>
+                    <td>@response.QuestionTitle</td>
+                    <td>@response.QuestionDescription</td>
+                    <td>
+                        <InputText @bind-Value="response.Response" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<button type="submit">Submit</button>
+
+</EditForm>
+
+@code {
+    [Parameter] public Guid id { get; set; }
+    [Inject] public SurveyService SurveyService { get; set; }
+    [Inject] public NavigationManager NavigationManager { get; set; }
+
+    private User currentUser;
+    private UISurveyDTO uISurvey = new UISurveyDTO();
+
+    // TODO switch UI to flexbox
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = new User() {
+            Id = Guid.Parse("c3ef4961-998a-4fb5-b4dc-ab131b0c0657"),
+            Name = "John Hancock"
+        };  
+        uISurvey.Survey = await SurveyService.GetSurveyDetails(id);
+
+        var existingResponses = await SurveyService.GetSurveyResponsesForUser(id, currentUser.Id);
+
+        if(existingResponses.Any()) { 
+            uISurvey.Responses = existingResponses;
+        } else {
+            uISurvey.Responses = uISurvey.Survey.Questions
+            .Select(x => new SurveyResponse() { 
+                SurveyId = uISurvey.Survey.Id, 
+                QuestionTitle = x.QuestionTitle,
+                QuestionDescription = x.QuestionDescription, 
+                UserId = currentUser.Id })
+            .ToList();
+            foreach (var response in uISurvey.Responses) {
+                await SurveyService.AddResponse(response);
+            }
+        }
+    }
+
+    public async Task Submit() {
+        await SurveyService.UpdateResponse(uISurvey.Responses);
+        NavigationManager.NavigateTo("/surveyresponses/" + id + "/" + currentUser.Id);
+        return;
+    }
+
+    public class UISurveyDTO {
+        public Survey Survey {get;set;}
+        public List<SurveyResponse> Responses {get;set;}
+    }
+}

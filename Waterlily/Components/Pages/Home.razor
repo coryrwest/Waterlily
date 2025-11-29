@@ -1,0 +1,24 @@
+﻿@page "/"
+
+<PageTitle>Surveys</PageTitle>
+
+<h1>Pick a survey!</h1>
+
+<ul>
+@foreach (var survey in _surveys) {
+    <li>
+        <a href="/survey/@survey.Id">@survey.Name</a>
+    </li>
+}
+</ul>
+
+
+@code {
+    [Inject] public SurveyService SurveyService { get; set; }
+
+    private List<Survey> _surveys = new List<Survey>();
+
+    protected override async Task OnInitializedAsync() {
+        _surveys = await SurveyService.GetSurveyList();
+    }
+}
